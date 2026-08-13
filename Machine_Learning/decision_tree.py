@@ -1,85 +1,44 @@
+from data_splitting import Data
 import numpy as np
 import matplotlib.pyplot as plt
+import math
+import random
 
-class Node:
-    def __init__(self,depth):
-        self.depth = depth
-        self.split_feature = None
-        self.threshold = None
-        self.left_child = None
-        self.right_child = None
-        self.probs = None
 
-    def __repr__(self):
-        return f'DT Node: \n -| Depth: {self.depth}' \
-                        f'\n -| Split feature: {self.split_feature}' \
-                        f'\n -| Threshold: {self.threshold}' \
-                        f'\n -| Probs: {self.probs}'
+class Solver:
+    def __init__(self):
+        probabilites = np.array([])
+        self.data = Data()
 
-class DSTree:
 
-    def __init__(self,depth = 1):
-        self.root = None
-        self.depth = depth
 
-    def class_prob_vector(self, y):
-        len_of_y = len(y)
-        zero_count = 0
-        one_count = 0
-        for val in y:
-            if val ==0:
-                zero_count+=1
-            else:
-                one_count+=1
+    def determinized_start(self):
 
-        prob_zero = zero_count / len_of_y
-        prob_one = one_count / len_of_y
 
-        arr = np.array([prob_zero,prob_one])
+        feedback = None
 
-    def leaf_condition(self,node):
-        if self.max_depth == node.depth:
-            return True
-        else:
-            for val in (node.probs):
-                if val == 1:
-                    return True
-        return False
 
-    def gini_score(self,X,y,i,threshold):
+        return feedback
 
-        left_y = []
-        right_y = []
+    def filter_pos(self):
+        if self.data.all_words:
+            for word in self.data.all_words:
+                #if word does not fit the feedback then continue
+                #else add it into the possible_words
+                return
 
-        for r in range(len(X)):
-            if X[r][i] > threshold:
-                right_y.append(y[r])
-            else:
-                left_y.append(y[r])
+        for word in self.data.possible_words:
+            #check if the new feedback fits the current word
+            # list if not cut it down
 
-        length_y = len(y)
-        nL = len(left_y)
-        nR = len(right_y)
+            return
 
-        def gini_side(side):
-            feat = len(side)
-            if feat ==0:
-                return 0.0
-            zero_count = 0
-            one_count =0
-            for label in side:
-                if label == 0:
-                    zero_count+=1
-                else:
-                    one_count +=1
-            p0 = zero_count / feat
-            p1 = zero_count / feat
 
-            return 1.0 - (p0 **2 + p1 **2)
+        self.data.possible_words.append()
 
-        G_L = gini_side(left_y)
-        G_R = gini_side(right_y)
+    def entropy(self):
 
-        return (nL / length_y) * G_L + (nR / length_y) * G_R
+        total = len(self.data.possible_words)
+
 
 
