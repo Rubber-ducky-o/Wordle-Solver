@@ -1,162 +1,208 @@
-from Machine_Learning.data_splitting import Data
-import numpy as np
-import matplotlib.pyplot as plt
+from data_splitting import Data
 import math
-import random
+import sys
 
+GRAY = "rgb(58, 58, 60)"
+YELLOW = "rgb(181, 159, 59)"
+GREEN = "rgb(83, 141, 78)"
 
 class Solver:
     def __init__(self):
         self.data = Data()
+        self.count = 0
         # LETTER | VALUE | POSITION
         self.feedback = [['',0,0],
                          ['',0,1],
                          ['',0,2],
                          ['',0,3],
                          ['',0,4]]
-
-        self.probabilites = []
-
-
+        self.win = False
 
     def is_empty(self):
         return bool(self.data.possible_words)
 
 
-    def insertion(self,word):
-        pass
-        #communication for js and python
+    def word_choice(self):
+
+
+        if self.count == 0:
+            self.count += 1
+            return self.determinized_start()
+        else:
+            print(f"Possible Words Left: {len(self.data.possible_words)}")
+
+            next_word = self.best_move()
+
+            if self.data.debug:
+                print(f"NEXT BEST MOVE IS: {next_word}")
+
+            self.data.possible_words.pop(next_word)
+
+            for index, char in enumerate(next_word):
+                self.feedback[index][0] = char
+
+            return next_word
 
 
     def determinized_start(self):
-
         word = self.data.randomized_start()
 
         for index, char in enumerate(word):
             self.feedback[index][0] = char
 
         #FUNCTION TO INSERT LETTERS INTO THE WORDLE GAME
-        self.insertion(word)
         #THEN GET RESULTS BACK
+        if self.data.debug:
+            print(f"Word chosen is: {word}")
 
-        return
+        return word
 
 
+    def scoring(self,act_feed : list):
+        print(act_feed)
 
-    def scoring(self,act_feed):
-        #0 grey
-        #1 yellow
-        #2 green
+
         for index,result in enumerate(act_feed):
-            match result:
-                case "GREY":
-                    self.feedback[index][1] = 0
-                case "YELLOW":
-                    #THIS CASE POSITION WOULD NOT MATTER:
-                    self.feedback[index][1] = 1
-                case "GREEN":
-                    self.feedback[index][1] = 2
-                case _:
-                    print("ERROR HAS OCCURED")
+
+            if GRAY in result:
+
+                self.feedback[index][1] = 0
+
+            if YELLOW in result:
+
+                self.feedback[index][1] = 1
+
+            if GREEN in result:
+
+                self.feedback[index][1] = 2
+
+        if self.data.debug:
+            print(f"LETTER | SCORE | POSITION \n {self.feedback}")
+
+        score = sum(row[1] for row in self.feedback)
+
+        if score == 10:
+            self.end_game()
+            return
 
         return
 
 
-
-    def first_word_filter(self):
+    def word_filter(self):
         # WANT TO ONLY ADD CHARACTERS HERE THAT WILL MATTER SO THEN THEY CAN BE SENT TO GET REMAINING
-        char_list = []
+        gray_char = []
+        yellow_char = []
+        green_char = []
 
-        for index in range(len(self.feedback)):
-            if self.feedback[index][1] == 2 or self.feedback[index][1] == 1:
-                char_list.append(self.feedback[index][0])
+        for row in self.feedback:
 
-        self.data.update_possible_words(char_list)
+            if row[1] == 2:
 
-    def bucket_scoring(self):
-        #LETTER | VALUE | POSITION
-        guessed_word = self.feedback[0][0] + self.feedback[1][0] + self.feedback[2][0] +self.feedback[3][0] +self.feedback[4][0]
-        #1 CONVERT TO CHARACTERS THEN LOOP THROUGH EACH CHARACTER COMPARING
-        #2 CHECK IF IN
-        #PRIORITIZE SCORES 2, THEN 1 THEN 0 SO WE KNOW, IF
+                green_char.append((row[0],row[2]))
 
-        #SCORE 2: same spot  = 2, not in same spot = 1
-        #SCORE 1: same spot = 0, not in same spot = 1
-        #SCORE 0: same spot = 0, different spot = 0
-        for word in self.data.possible_words:
-            #WORD = POSSIBLE WORDS
-            #print(f"CURRENT WORD IS {word}")
-            for index, char in enumerate(word):
-                #ITERATING THROUGH THE WORD
-                #print(f"CURRENT CHAR FROM WORD WITH INDEX IS {char} | {index}")
-                if char in guessed_word:
-                    #print(f"CHAR : {char} IS IN GUESSED WORD: {guessed_word}")
-                    #CHECK REWARD BY FINDING INDEX OF CHARACTER
-                    for index_g in range(4):
+            if row[1] == 1:
+                #CHAR | POS
+                yellow_char.append((row[0],row[2]))
+
+            if row[1] == 0:
+                gray_char.append(row[0])
 
 
-                        letter = self.feedback[index_g][0]
-                        #print(f"LETTER : {letter} IS BEING COMPARED TO CHAR {char}")
+        if gray_char:
+            self.data.update_possible_words(gray_char)
 
-                        if letter == char:
-                            #print(f"LETTER : {letter} WAS MATCH FOR CHAR:  {char}")
+        for pair in yellow_char:
+            self.data.yellow_filter(pair)
 
-                            score = self.feedback[index_g][1]
-                            position = self.feedback[index_g][2]
-                            #print(f"SCORE : {score} OF CHAR: {char}  WITH POSITION : {position}")
+        if green_char:
+            self.data.update_specific_words(green_char)
 
-                            match score:
-                                case 0:
-                                    self.data.possible_words[word] += "0"
-                                    #print(f"CASE 0 : 0 POINTS GIVEN")
+        return
 
-                                    break
+    def weighted_entropy(self,candidate):
 
-                                case 1:
-                                    if position == index:
-                                        self.data.possible_words[word]+="0"
-                                        #print(f"CASE 1 : 0 POINTS GIVEN")
-                                    if position != index:
-                                        self.data.possible_words[word]+="1"
-                                        #print(f"CASE 1 : 1 POINTS GIVEN")
+            known_green = sum(1 for row in self.feedback if row[1] == 2)
+            correct_pos = sum(1 for row in self.feedback  if (row[1] == 2) and (candidate[row[2]] == row[0]) )
 
-                                    break
-
-                                case 2:
-                                    if position == index:
-                                        self.data.possible_words[word]+="2"
-                                        #print(f"CASE 2 : 2 POINTS GIVEN")
-
-                                    if position != index:
-                                        self.data.possible_words[word]+="1"
-                                        #print(f"CASE 2 : 2 POINTS GIVEN")
-
-                                    break
-
-                        else:
-                            #print(f"LETTERS DO NOT MATCH NOTHING GIVEN NEXT")
-
-                            continue
-                else:
-                    self.data.possible_words[word] += "0"
-                    #print(f"CHAR WAS NOT IN WORD GIVEN 0")
-
-            self.data.scores[self.data.possible_words[word]] += 1
+            return (correct_pos + 1) / (known_green + 1)
 
 
 
 
+    def IG_scoring(self):
+
+        print(self.data.word_count)
+        print(f"Actual dictionary: {len(self.data.possible_words)}")
+        H_X = self.entropy(self.data.word_count)
+
+        if self.data.debug:
+            print(f"H(X) : {H_X}")
+
+        for candidate in self.data.possible_words:
+
+            buckets = {}
+
+            for possible_answer in self.data.possible_words:
+
+                score = self.score_sort(candidate, possible_answer)
+
+                if score not in buckets:
+                    buckets[score] = 0
+
+                buckets[score] +=1
+
+            #use at your own risk, takes over a minute :)
+            #if self.data.debug:
+                #for key,value in buckets.items():
+                    #print(f"Bucket: {key} | Values: {value}")
+
+            E_IG = H_X - self.entropy(buckets)
+            W_G = self.weighted_entropy(candidate)
+
+            E_IG = E_IG * W_G
+
+            self.data.possible_words[candidate] = E_IG
+
+        return
+
+    def entropy(self,total) -> float:
+
+        if isinstance(total, dict):
+            bucket_size = sum(tot for tot in total.values())
+            return sum((bucket_v / bucket_size) * (math.log2(bucket_v)) for bucket_v in total.values())
+
+        return math.log2(total)
 
 
-    def main_brain(self):
-        pass
+
+    def score_sort(self,candidate,possible_answer) -> str:
+        score = ""
+
+        for index, char in enumerate(candidate):
+
+            if char == possible_answer[index]:
+                score += "2"
+
+            elif char in possible_answer:
+                score += "1"
+
+            else:
+                score += "0"
+
+        return score
 
 
+    def best_move(self):
+        if self.data.debug:
+            for key,value in self.data.possible_words.items():
+                print(f"Word: {key}| Score: {value}")
 
+        return max(self.data.possible_words,key= self.data.possible_words.get)
 
-
-
-
-
+    def end_game(self):
+        self.win =True
+        word = "".join(row[0] for row in self.feedback)
+        print(f"WORDLE SOLVED! word was {word}")
+        return
 
 
