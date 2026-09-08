@@ -1,4 +1,4 @@
-from data_splitting import Data
+from .data_splitting import Data
 import math
 import sys
 
@@ -10,30 +10,31 @@ class Solver:
     def __init__(self):
         self.data = Data()
         self.count = 0
+        self.win = False
+        self.game_over = False
+        self.guess_count = 0
         # LETTER | VALUE | POSITION
         self.feedback = [['',0,0],
                          ['',0,1],
                          ['',0,2],
                          ['',0,3],
                          ['',0,4]]
-        self.win = False
-
-    def is_empty(self):
-        return bool(self.data.possible_words)
 
 
-    def word_choice(self):
-
+    def word_choice(self) -> str:
 
         if self.count == 0:
             self.count += 1
             return self.determinized_start()
+
         else:
-            print(f"Possible Words Left: {len(self.data.possible_words)}")
 
             next_word = self.best_move()
 
+
             if self.data.debug:
+
+                print(f"Possible Words Left: {len(self.data.possible_words)}")
                 print(f"NEXT BEST MOVE IS: {next_word}")
 
             self.data.possible_words.pop(next_word)
@@ -44,14 +45,13 @@ class Solver:
             return next_word
 
 
-    def determinized_start(self):
+    def determinized_start(self) -> str:
         word = self.data.randomized_start()
 
         for index, char in enumerate(word):
             self.feedback[index][0] = char
 
-        #FUNCTION TO INSERT LETTERS INTO THE WORDLE GAME
-        #THEN GET RESULTS BACK
+
         if self.data.debug:
             print(f"Word chosen is: {word}")
 
@@ -59,8 +59,11 @@ class Solver:
 
 
     def scoring(self,act_feed : list):
-        print(act_feed)
 
+        if self.data.debug:
+            print(act_feed)
+
+        self.guess_count+=1
 
         for index,result in enumerate(act_feed):
 
@@ -79,10 +82,26 @@ class Solver:
         if self.data.debug:
             print(f"LETTER | SCORE | POSITION \n {self.feedback}")
 
+
+        word = "".join(row[0] for row in self.feedback)
+
         score = sum(row[1] for row in self.feedback)
 
+
+        if self.data.graphing:
+            self.data.graphing_conversion(self.data.possible_words,word)
+
         if score == 10:
+
+            self.win =True
+            self.game_over = True
             self.end_game()
+            return
+
+        if self.guess_count >= 6:
+            self.win = False
+            self.game_over = True
+            self.lose_game()
             return
 
         return
@@ -119,7 +138,8 @@ class Solver:
 
         return
 
-    def weighted_entropy(self,candidate):
+
+    def weight(self,candidate : str) -> float:
 
             known_green = sum(1 for row in self.feedback if row[1] == 2)
             correct_pos = sum(1 for row in self.feedback  if (row[1] == 2) and (candidate[row[2]] == row[0]) )
@@ -127,12 +147,8 @@ class Solver:
             return (correct_pos + 1) / (known_green + 1)
 
 
-
-
     def IG_scoring(self):
 
-        print(self.data.word_count)
-        print(f"Actual dictionary: {len(self.data.possible_words)}")
         H_X = self.entropy(self.data.word_count)
 
         if self.data.debug:
@@ -152,18 +168,22 @@ class Solver:
                 buckets[score] +=1
 
             #use at your own risk, takes over a minute :)
-            #if self.data.debug:
-                #for key,value in buckets.items():
-                    #print(f"Bucket: {key} | Values: {value}")
+            if self.data.super_debug:
+                for key,value in buckets.items():
+                    print(f"Bucket: {key} | Values: {value}")
 
             E_IG = H_X - self.entropy(buckets)
-            W_G = self.weighted_entropy(candidate)
+            W_G = self.weight(candidate)
+            IG = E_IG * W_G
 
-            E_IG = E_IG * W_G
+            if self.data.debug:
+                print(f"Word: {candidate} | Entropy w/o weight {E_IG} | Entropy w/ weight {IG}")
 
-            self.data.possible_words[candidate] = E_IG
+            self.data.possible_words[candidate] = IG
+
 
         return
+
 
     def entropy(self,total) -> float:
 
@@ -174,8 +194,7 @@ class Solver:
         return math.log2(total)
 
 
-
-    def score_sort(self,candidate,possible_answer) -> str:
+    def score_sort(self,candidate : str ,possible_answer : str) -> str:
         score = ""
 
         for index, char in enumerate(candidate):
@@ -192,17 +211,30 @@ class Solver:
         return score
 
 
-    def best_move(self):
-        if self.data.debug:
+    def best_move(self) -> str:
+
+        if self.data.super_debug:
             for key,value in self.data.possible_words.items():
                 print(f"Word: {key}| Score: {value}")
 
         return max(self.data.possible_words,key= self.data.possible_words.get)
 
+
     def end_game(self):
-        self.win =True
+
         word = "".join(row[0] for row in self.feedback)
         print(f"WORDLE SOLVED! word was {word}")
+
+        if self.data.graphing:
+            self.data.display_graph()
+
         return
+
+
+    def lose_game(self):
+        word = "".join(row[0] for row in self.feedback)
+        print(f"WORDLE WAS NOT SOLVED, CLOSEST GUESS {word}")
+        return
+
 
 

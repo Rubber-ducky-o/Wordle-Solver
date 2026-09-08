@@ -45,13 +45,11 @@ class TestData(unittest.TestCase):
         self.assertEqual(value,"strip")
 
 
-
-
     def test_update_possible_words(self):
         data = Data()
         lst1 = ["a","v","f"]
         lst2 = ["favor","depth","sings","paver","signs","joke","odors"]
-        answer = {"favor": "", "paver": ""}
+        answer = {"depth": 0, "sings": 0,"signs":0,"joke":0,"odors":0}
         for word in lst2:
             data.possible_words[word] = 0
 
@@ -59,14 +57,48 @@ class TestData(unittest.TestCase):
         data.update_possible_words(lst1)
         self.assertDictEqual(data.possible_words, answer)
 
+
+    def test_update_specific_words(self):
+        data = Data()
         data.possible_words.clear()
 
-        for word in lst2:
-            data.all_words.append(word)
+        data.all_words =  ["favor","depth","sings","paver","signs","joke","odors"]
+        spots = [("a",1),("v",2)]
 
-        data.update_possible_words(lst1)
-
+        answer = {"favor": "","paver": ""}
+        data.update_specific_words(spots)
         self.assertDictEqual(data.possible_words,answer)
+
+        data.possible_words = {"favor": 0,"depth": 0 ,"sings" : 0,"paver" : 0,"signs" : 0 ,"joke" :0 ,"odors": 0}
+        spot = [("a",1),("v",2)]
+        answer = {"favor": 0,"paver": 0}
+        data.update_specific_words(spot)
+        self.assertDictEqual(data.possible_words,answer)
+
+    def test_yellow_filter(self):
+        data = Data()
+        data.all_words =  ["favor","depth","sings","paver","signs","joke","odors"]
+        pair = ("s",0)
+        answer = {"odors": ""}
+        data.yellow_filter(pair)
+        self.assertDictEqual(data.possible_words,answer)
+
+        data = Data()
+        data.possible_words = {"favor": 0,"depth": 0 ,"sings" : 0,"paver" : 0,"signs" : 0 ,"joke" :0 ,"odors": 0}
+        pair = ("a", 0)
+        answer = {"favor":0,"paver":0}
+        data.yellow_filter(pair)
+        self.assertDictEqual(data.possible_words,answer)
+
+    def test_graphing_conversion(self):
+        data = Data()
+        points = {"words": 0,"fudge": 0}
+        best_word = "plays"
+        data.graphing_conversion(points,best_word)
+        self.assertEqual(data.best_points[0],"plays")
+        self.assertListEqual(data.pairwise,[[("words",0),("fudge",0)]])
+
+
 
 
 class TestMachineLearning(unittest.TestCase):
@@ -83,9 +115,25 @@ class TestMachineLearning(unittest.TestCase):
         self.assertEqual(solver.feedback[4][0],'p')
 
 
+    def test_word_choice(self):
+        random.seed(42)
+        solver = Solver()
+        solver.data.all_words = ["strip"]
+
+        word = solver.word_choice()
+        self.assertEqual(word,"strip")
+
+
+        solver.data.possible_words = {"bangs": 1.2,"tiles":0.3}
+
+        word = solver.word_choice()
+
+        self.assertEqual(word,"bangs")
+
+
     def test_scoring(self):
         solver = Solver()
-        s_card = ["GREY","GREY","GREEN","YELLOW","GREY"]
+        s_card = ["rgb(58, 58, 60)","rgb(58, 58, 60)","rgb(83, 141, 78)","rgb(181, 159, 59)","rgb(58, 58, 60)"]
 
         solver.data.initialize()
         random.seed(42)
@@ -97,30 +145,63 @@ class TestMachineLearning(unittest.TestCase):
         self.assertEqual(solver.feedback[3][1],1)
         self.assertEqual(solver.feedback[4][1],0)
 
+        s_card = ["rgb(83, 141, 78)","rgb(83, 141, 78)","rgb(83, 141, 78)","rgb(83, 141, 78)","rgb(83, 141, 78)"]
 
-    def test_first_word_filter(self):
+        solver.scoring(s_card)
+        self.assertTrue(solver.win)
+        self.assertTrue(solver.game_over)
+
+        s_card = ["rgb(58, 58, 60)","rgb(83, 141, 78)","rgb(83, 141, 78)","rgb(83, 141, 78)","rgb(83, 141, 78)"]
+
+        solver.guess_count =6
+        solver.scoring(s_card)
+        self.assertFalse(solver.win)
+        self.assertTrue(solver.game_over)
+
+
+    def test_word_filter(self):
         solver = Solver()
         solver.data.initialize()
         random.seed(42)
         solver.determinized_start()
-        solver.first_word_filter()
+        for row in solver.feedback:
+            row[1] = 0
+        solver.word_filter()
         self.assertNotEqual(solver.data.word_count,3103)
 
-    def test_bucket_scoring(self):
+        solver.feedback = [['a',1,0],
+                         ['b',0,1],
+                         ['c',2,2],
+                         ['d',1,3],
+                         ['e',2,4]]
+
+        solver.word_filter()
+        self.assertEqual(solver.data.word_count,0)
+
+
+    def test_IG_scoring(self):
         solver = Solver()
         solver.data.initialize()
-        random.seed(42)
-        solver.determinized_start()
-        s_card = ["GREY","YELLOW","GREEN","GREEN","GREY"]
-        solver.scoring(s_card)
-
         solver.data.possible_words.clear()
-        solver.data.possible_words["tired"] = ""
-        solver.data.possible_words["lefty"] = ""
-        solver.bucket_scoring()
-        self.assertEqual(solver.data.scores["00010"],1)
 
-        self.assertEqual(solver.data.scores["11200"],1)
+
+        solver.data.possible_words["tired"] = 0
+        solver.data.possible_words["lefty"] = 0
+        solver.data.possible_words["handy"] = 0
+        solver.data.possible_words["souls"] = 0
+        solver.data.possible_words["might"] = 0
+        solver.data.update_word_counter()
+
+        solver.IG_scoring()
+
+        IG = solver.data.possible_words
+
+
+        self.assertEqual(round(IG["tired"],3),2.322)
+        self.assertEqual(round(IG["lefty"],3),2.322)
+        self.assertEqual(round(IG["handy"],3),2.322)
+        self.assertEqual(round(IG["souls"],3),1.371)
+        self.assertEqual(round(IG["might"],3),2.322)
 
 
 

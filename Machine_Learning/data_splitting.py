@@ -1,6 +1,8 @@
 import random
 from pathlib import Path
+import numpy as np
 import itertools
+from mapping import mapping_results
 
 class Data:
 
@@ -8,7 +10,13 @@ class Data:
         self.all_words = list()
         self.possible_words = dict()
         self.word_count = 0
+        self.pairwise = []
+        self.best_points = []
+
+        self.graphing = False
         self.debug = False
+        self.super_debug = False
+        self.super_debug = self.debug and self.super_debug
 
 
     def update_word_counter(self):
@@ -20,12 +28,15 @@ class Data:
         return
 
 
-    def initialize(self,Debug = False):
+    def initialize(self,Debug = False,graphing = False):
         self.debug = Debug
+        self.graphing = graphing
 
         dir_ = Path(__file__).resolve().parent.parent
-
-        full_path = dir_ / "Local_wordle" / "5-letter-words.txt"
+        if self.super_debug:
+            full_path = dir_ / "Local_wordle" / "small_test_sample.txt"
+        else:
+            full_path = dir_ / "Local_wordle" / "5-letter-words.txt"
 
         with open(full_path, "r", encoding = "utf-8") as word_list:
             for word in word_list:
@@ -36,12 +47,6 @@ class Data:
 
 
     def randomized_start(self):
-        if self.possible_words:
-            word = random.choice(self.possible_words)
-            self.possible_words.pop(word)
-            self.update_word_counter()
-
-            return word
 
         word = random.choice(self.all_words)
         self.all_words.remove(word)
@@ -54,8 +59,8 @@ class Data:
     def update_possible_words(self,characters: list):
 
         if len(self.possible_words) == 0:
-            self.possible_words = {word: "" for word in self.all_words if all(chars not in word for chars in characters)}
 
+            self.possible_words = {word: "" for word in self.all_words if all(chars not in word for chars in characters)}
             self.update_word_counter()
 
             if self.debug:
@@ -71,12 +76,12 @@ class Data:
 
         return
 
+
     def update_specific_words(self,spots: list[tuple]):
 
         if len(self.possible_words) == 0:
             self.possible_words = {k: "" for k in self.all_words if all(character == k[position] for character, position in spots)}
             self.update_word_counter()
-
             return
 
         self.possible_words = {k: v for k, v in self.possible_words.items() if all(character == k[position] for character, position in spots)}
@@ -85,6 +90,7 @@ class Data:
 
         return
 
+
     def yellow_filter(self,combination : tuple):
         character = combination[0]
         position = combination[1]
@@ -92,7 +98,6 @@ class Data:
         if len(self.possible_words) == 0:
             self.possible_words = {word: "" for word in self.all_words if (character in word and word[position] != character)}
             self.update_word_counter()
-
             return
 
         self.possible_words = {word: value for word,value in self.possible_words.items() if (character in word and word[position] != character)}
@@ -100,6 +105,18 @@ class Data:
         self.all_words.clear()
 
         return
+
+
+    def graphing_conversion(self, points : dict,best_choice : str ) ->list:
+        self.best_points.append((best_choice))
+        self.pairwise.append(list(points.items()))
+
+
+    def display_graph(self):
+        mapping_results.plotting(self.pairwise)
+
+
+
 
 
 
