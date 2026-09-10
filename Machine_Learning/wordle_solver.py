@@ -1,6 +1,5 @@
 from .data_splitting import Data
 import math
-import sys
 
 GRAY = "rgb(58, 58, 60)"
 YELLOW = "rgb(181, 159, 59)"
@@ -38,6 +37,7 @@ class Solver:
                 print(f"NEXT BEST MOVE IS: {next_word}")
 
             self.data.possible_words.pop(next_word)
+            self.data.update_word_counter()
 
             for index, char in enumerate(next_word):
                 self.feedback[index][0] = char
@@ -89,7 +89,9 @@ class Solver:
 
 
         if self.data.graphing:
-            self.data.graphing_conversion(self.data.possible_words,word)
+
+            score_string = "".join(str(row[1]) for row in self.feedback)
+            self.data.decision_history.append((word,score_string))
 
         if score == 10:
 
@@ -181,6 +183,8 @@ class Solver:
 
             self.data.possible_words[candidate] = IG
 
+        if self.data.graphing:
+            self.data.pairwise.append(list(self.data.possible_words.items()))
 
         return
 
@@ -234,6 +238,8 @@ class Solver:
     def lose_game(self):
         word = "".join(row[0] for row in self.feedback)
         print(f"WORDLE WAS NOT SOLVED, CLOSEST GUESS {word}")
+        if self.data.graphing:
+            self.data.display_graph()
         return
 
 

@@ -1,7 +1,6 @@
 import random
 from pathlib import Path
 import numpy as np
-import itertools
 from mapping import mapping_results
 
 class Data:
@@ -11,7 +10,7 @@ class Data:
         self.possible_words = dict()
         self.word_count = 0
         self.pairwise = []
-        self.best_points = []
+        self.decision_history = []
 
         self.graphing = False
         self.debug = False
@@ -103,17 +102,12 @@ class Data:
         self.possible_words = {word: value for word,value in self.possible_words.items() if (character in word and word[position] != character)}
         self.update_word_counter()
         self.all_words.clear()
-
         return
-
-
-    def graphing_conversion(self, points : dict,best_choice : str ) ->list:
-        self.best_points.append((best_choice))
-        self.pairwise.append(list(points.items()))
 
 
     def display_graph(self):
         mapping_results.plotting(self.pairwise)
+        mapping_results.reduction_graph(self.pairwise)
 
 
 

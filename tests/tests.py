@@ -129,6 +129,7 @@ class TestMachineLearning(unittest.TestCase):
         word = solver.word_choice()
 
         self.assertEqual(word,"bangs")
+        self.assertEqual(solver.data.word_count,1)
 
 
     def test_scoring(self):
@@ -202,17 +203,6 @@ class TestMachineLearning(unittest.TestCase):
         self.assertEqual(round(IG["handy"],3),2.322)
         self.assertEqual(round(IG["souls"],3),1.371)
         self.assertEqual(round(IG["might"],3),2.322)
-
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
