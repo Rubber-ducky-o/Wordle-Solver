@@ -73,6 +73,7 @@ Sordle
 ## Visualizations
 ### Information Gain Landscape
 <img width="640" height="480" alt="3d_model_wordle_solver" src="https://github.com/user-attachments/assets/3c5ff022-684c-48ad-a4c6-147309ed9465" />
+
 Displays 3d model of information-gain scores of candidate words across solver iterations.
 
 ### Candidate Search Space Reduction
