@@ -77,6 +77,7 @@ Displays 3d model of information-gain scores of candidate words across solver it
 
 ### Candidate Search Space Reduction
 <img width="640" height="480" alt="2d_model_wordle_solver" src="https://github.com/user-attachments/assets/2b8f6dea-79f9-4bb2-aa9c-3b0fae740052" />
+
 Displays the decrease of remaining candidate guesses through the solvers process.
 ### Enable Graphing
 
