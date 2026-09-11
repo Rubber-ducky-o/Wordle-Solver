@@ -67,15 +67,15 @@ class Solver:
 
         for index,result in enumerate(act_feed):
 
-            if GRAY in result:
+            if GRAY in result or (result =="absent"):
 
                 self.feedback[index][1] = 0
 
-            if YELLOW in result:
+            if YELLOW in result or (result == "present"):
 
                 self.feedback[index][1] = 1
 
-            if GREEN in result:
+            if GREEN in result or (result =="correct"):
 
                 self.feedback[index][1] = 2
 

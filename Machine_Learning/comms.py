@@ -45,7 +45,7 @@ with sync_playwright() as p:
 
         solver = Solver()
         #Change the Boolean values to help debug or display the graph at the end of the game
-        solver.data.initialize(Debug =False, graphing = False)
+        solver.data.initialize(Debug =False, graphing = True)
         row  = 0
         total_games += 1
         game_compute_time = 0
