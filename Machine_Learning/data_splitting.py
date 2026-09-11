@@ -68,7 +68,6 @@ class Data:
 
         self.possible_words = {word: value for word,value in self.possible_words.items() if all(chars not in word for chars in characters)}
         self.update_word_counter()
-        self.all_words.clear()
 
         if self.debug:
             print(f"Possible Amount of Words left: {self.word_count}")
@@ -85,7 +84,6 @@ class Data:
 
         self.possible_words = {k: v for k, v in self.possible_words.items() if all(character == k[position] for character, position in spots)}
         self.update_word_counter()
-        self.all_words.clear()
 
         return
 
@@ -101,13 +99,12 @@ class Data:
 
         self.possible_words = {word: value for word,value in self.possible_words.items() if (character in word and word[position] != character)}
         self.update_word_counter()
-        self.all_words.clear()
         return
 
 
     def display_graph(self):
         mapping_results.plotting(self.pairwise)
-        mapping_results.reduction_graph(self.pairwise)
+        mapping_results.reduction_graph(self.pairwise,len(self.all_words))
 
 
 

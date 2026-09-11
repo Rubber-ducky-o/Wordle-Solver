@@ -80,11 +80,11 @@ def decision_graph(guess_history):
     ax.axis("off")
     plt.show()
 
-def reduction_graph(pairwise):
+def reduction_graph(pairwise,initial_count : int):
     _,ax = plt.subplots()
 
-    iterations = []
-    candidate_count = []
+    iterations = [0]
+    candidate_count = [initial_count]
 
     for iteration,layer in enumerate(pairwise,start=1):
 
