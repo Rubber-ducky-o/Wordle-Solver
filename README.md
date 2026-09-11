@@ -7,10 +7,10 @@
 ## Overview
 An automated Wordle solver that uses entropy and information gain to evaluate a best possible guess.
 
-The solver filters through a 30,000+ word set using green, yellow, and gray feedback, reducing the search space after each guess.
+The solver filters through a 3,000+ word set using green, yellow, and gray feedback, reducing the search space after each guess.
 
 ## Performance
-Tested across 1,000 automated Wordle games:
+Tested across 1,000 automated local wordle games:
 
 | Metric | Result | 
 |--------|--------|
@@ -69,15 +69,30 @@ Terminal 2:
 Sordle
 >python -m Machine_Learning.comms
 ```
+## Starting Wordle Online
+The wordle solver can also interact with the NYT website with Playwright.
+
+### Online Mode 
+
+From project root, in a terminal, run:
+```bash
+python -m Machine_Learning.online
+```
+
+Playwright will directly open the NYT wordle page and begin solving the daily wordle.
+
+>**NOTE:** NYT Wordle only provides a single daily puzzle, running the online version multiple times will result in the same word being solved for. 
 
 ## Visualizations
 ### Information Gain Landscape
-<img width="640" height="480" alt="3d_model_wordle_solver" src="https://github.com/user-attachments/assets/3c5ff022-684c-48ad-a4c6-147309ed9465" />
+
+<img width="640" height="480" alt="Updated_3d" src="https://github.com/user-attachments/assets/a2d1783b-038e-4d3d-9102-f9b18566e5b3" />
+
 
 Displays 3d model of information-gain scores of candidate words across solver iterations.
 
 ### Candidate Search Space Reduction
-<img width="640" height="480" alt="2d_model_wordle_solver" src="https://github.com/user-attachments/assets/2b8f6dea-79f9-4bb2-aa9c-3b0fae740052" />
+<img width="640" height="480" alt="Updated_2d" src="https://github.com/user-attachments/assets/03aff01b-6635-4874-b73d-42316c3b583a" />
 
 Displays the decrease of remaining candidate guesses through the solvers process.
 ### Enable Graphing
@@ -94,7 +109,8 @@ solver.data.initialize(Debug =False, graphing = True)
 To disable graphing:
 ```python
 #line 48
-solver.data.initializa(Debug = False,graphing =False)
+solver.data.initialize(Debug = False,graphing =False)
+```
 
 >**NOTE:** graphing is shown per game ran, if you're running more than 1 game ensure to close both graphs upon appearing for the solver to continue.
 Usage
